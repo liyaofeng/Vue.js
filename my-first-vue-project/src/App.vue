@@ -6,17 +6,35 @@
       <li v-for="item in items" v-text="item.label" :class="{finished: item.isFinished}" v-on:click="toggleFinish(item)">
       </li>
     </ul>
+    <p>child tell me: {{ childWords }}</p>
+    <component-a id="componentsa" msg-from-father="you die!" v-on:child-tell-me-something="listenToMyBoy"></component-a>
   </div>
 </template>
 
 <script>
+import Store from "./storage.js"
+import ComponentA from "./components/componentA.vue"
 export default {
   data () {
     return {
       title: 'This is a todo list!',
-      items: [],
+      items: Store.fetch(),
       // finishedClass: "finished"
-      newItem: ""
+      newItem: "",
+      childWords: ""
+    }
+  },
+
+  components: {
+    ComponentA
+  },
+
+  watch: {
+    "items": {
+      handler(items) {
+        Store.save(items)
+      },
+      deep: true
     }
   },
 
@@ -29,9 +47,17 @@ export default {
         this.items.splice(0, 0, {
           label: this.newItem,
           isFinished: false
-        })
+        });
+        console.log(this.newItem);
+        ComponentA.newMsgFromFather = this.newItem;
+        document.getElementById('componentsa').newMsgFromFather = this.newItem;
+        this.$dispatch("on-add-new", this.newItem);
+        this.$dispatch('child-msg', this.newItem);
         this.newItem = "";
       }
+    },
+    listenToMyBoy(msg) {
+      this.childWords = msg;
     }
   }
 }
